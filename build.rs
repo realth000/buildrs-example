@@ -83,7 +83,7 @@ fn main() {
         make_trimmed_str_var_from_bytes("GIT_COMMIT_REVISION_LONG", git_commit_revision_long)
             .as_str(),
     );
-    data.push_str(make_trimmed_str_var("GIT_TAG_VERSION", &git_tag).as_str());
+    data.push_str(make_trimmed_str_var("GIT_TAG_VERSION", git_tag).as_str());
 
     let dst_path = PathBuf::from(out_dir).join("constants.generated.rs");
     generate_file(dst_path, data);
@@ -110,14 +110,14 @@ where
     (cmd_stdout, cmd_stderr)
 }
 
-fn make_trimmed_str_var(name: &str, value: &str) -> String {
-    format!("pub const {name}: &'static str = \"{value}\";\n",)
+fn make_trimmed_str_var(name: &str, value: String) -> String {
+    format!(
+        "pub const {name}: &'static str = \"{}\";\n",
+        value.trim_matches(|c| [' ', '\t', '"', '\'', '\r', '\n', '`'].contains(&c))
+    )
 }
 
 fn make_trimmed_str_var_from_bytes(name: &str, value: Vec<u8>) -> String {
-    let v = format!(
-        "pub const {name}: &'static str = \"{}\";\n",
-        String::from_utf8(value).unwrap().trim()
-    );
-    v
+    let str = String::from_utf8(value).unwrap();
+    make_trimmed_str_var(name, str)
 }
